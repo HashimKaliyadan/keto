@@ -1,0 +1,1 @@
+export default function Loading() { return <main className="shell loading-page" aria-busy="true" aria-label="Loading Keto"><div className="skeleton skeleton-nav" /><div className="skeleton skeleton-hero" /><div className="cards">{[1,2,3].map(i => <div className="skeleton skeleton-card" key={i} />)}</div></main>; }
