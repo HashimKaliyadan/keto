@@ -133,6 +133,6 @@ export const hostels: Hostel[] = [
 export const money = (value: number) => new Intl.NumberFormat('en-IN').format(value);
 export function track(action: string) {
   const win = window as Window & { gtag?: (...args: unknown[]) => void };
-  win.gtag?.('event', action, { event_category: 'keto_frontend' });
+  win.gtag?.('event', action, { event_category: 'hostel_frontend' });
 }
 

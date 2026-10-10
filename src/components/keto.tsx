@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, ArrowRight, MapPin, Search, Wifi, Utensils, BookOpen, Shirt, ShieldCheck, Sun, Moon, ChevronDown, ChevronLeft, ChevronRight, Calendar, X, Check, BedDouble, Layers, DoorOpen, HeartHandshake, Upload, CheckCircle2, LoaderCircle, Menu, Sparkles, Phone, Navigation, Car, Clock, Plus, RotateCcw, Eye, ExternalLink, Trash2, Droplets, Bike, WashingMachine, BroomSparkles } from 'lucide-react';
+import { ArrowUpRight, ArrowRight, MapPin, Search, Wifi, Utensils, BookOpen, Shirt, ShieldCheck, Sun, Moon, ChevronDown, ChevronLeft, ChevronRight, Calendar, X, Check, BedDouble, Layers, DoorOpen, HeartHandshake, Upload, CheckCircle2, LoaderCircle, Menu, Sparkles, Phone, Navigation, Car, Clock, Plus, RotateCcw, Eye, ExternalLink, Trash2, Droplets, Bike, WashingMachine, BroomSparkles, Building2 } from 'lucide-react';
 import { hostels, money, track, type Hostel } from '@/lib/data';
 
 type View = 'enquiry' | 'hostel' | 'admission' | null;
@@ -83,7 +83,13 @@ function AmenityCardItem({ Icon, title, sub, mobileSub }: Amenity) {
   );
 }
 
-
+function BrandLogo({ compact = false }: { compact?: boolean }) {
+  return (
+    <span className={`hostel-logo ${compact ? 'hostel-logo-compact' : ''}`}>
+      <span className="hostel-logo-text">HOSTEL</span>
+    </span>
+  );
+}
 
 function Dialog({
   children,
@@ -412,7 +418,7 @@ export default function Keto() {
   }, []);
   useEffect(() => {
     const initial = readRoute(); setRoute(initial); routeRef.current = initial;
-    const savedTheme = localStorage.getItem('keto-theme');
+    const savedTheme = localStorage.getItem('hostel-theme') || localStorage.getItem('keto-theme');
     const isDark = savedTheme === 'dark'; setDark(isDark); document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
     const onPop = () => {
       const next = readRoute();
@@ -488,7 +494,7 @@ export default function Keto() {
       navigate({ ...baseRoute, view, hostel });
     }
   }
-  function toggleTheme() { const next = !dark; setDark(next); document.documentElement.dataset.theme = next ? 'dark' : 'light'; localStorage.setItem('keto-theme', next ? 'dark' : 'light'); }
+  function toggleTheme() { const next = !dark; setDark(next); document.documentElement.dataset.theme = next ? 'dark' : 'light'; localStorage.setItem('hostel-theme', next ? 'dark' : 'light'); }
   const selected = hostels.find(h => h.id === route.hostel) || hostels[0];
   const visible = [...hostels]
     .filter(h => (filter.area === 'All locations' || h.area === filter.area) && (filter.audience === 'Everyone' || h.audience === filter.audience))
@@ -514,13 +520,13 @@ export default function Keto() {
 
   return <>
     <div className="hero-screen-wrapper">
-      <div className="announcement"><span className="announcement-dot" /> A new city. A familiar feeling. <span className="announcement-extra">Find your place with Keto.</span></div>
+      <div className="announcement"><span className="announcement-dot" /> A new city. A familiar feeling. <span className="announcement-extra">Find your ideal student hostel.</span></div>
       <div className="header-slot">
         <header className={`header-wrapper ${scrolled ? 'header-scrolled' : ''}`}>
           <div className="site-header shell">
-            <a href="/" aria-label="Keto home" className="brand"><span className="brand-logo-wrap"><Image className="logo-light" src="/logo.webp" width={133} height={54} alt="Keto" priority unoptimized /><Image className="logo-dark" src="/logowhite.webp" width={133} height={54} alt="Keto" priority unoptimized /></span><span className="brand-tag">student living</span></a>
+            <a href="/" aria-label="HOSTEL home" className="brand"><BrandLogo /><span className="brand-tag">student living</span></a>
             <nav className="nav" aria-label="Main navigation">
-              <a href="#home">Keto Home</a>
+              <a href="#home">Home</a>
               <a href="#hostels">Our hostels</a>
               <a href="#how-it-works">How it works</a>
             </nav>
@@ -550,11 +556,8 @@ export default function Keto() {
           >
             <div className="sheet-handle" aria-hidden="true" />
             <div className="mobile-nav-header">
-              <a href="/" aria-label="Keto home" className="brand" onClick={() => closeMenu()}>
-                <span className="brand-logo-wrap">
-                  <Image className="logo-light" src="/logo.webp" width={110} height={45} alt="Keto" priority unoptimized />
-                  <Image className="logo-dark" src="/logowhite.webp" width={110} height={45} alt="Keto" priority unoptimized />
-                </span>
+              <a href="/" aria-label="HOSTEL home" className="brand" onClick={() => closeMenu()}>
+                <BrandLogo />
                 <span className="brand-tag">student living</span>
               </a>
               <div className="mobile-nav-actions">
@@ -566,7 +569,7 @@ export default function Keto() {
                 </button>
               </div>
             </div>
-            <a href="#home" onClick={() => closeMenu()}>Keto Home</a>
+            <a href="#home" onClick={() => closeMenu()}>Home</a>
             <a href="#hostels" onClick={() => closeMenu()}>Our hostels</a>
             <a href="#how-it-works" onClick={() => closeMenu()}>How it works</a>
             <button className="button primary mobile-nav-cta" onClick={() => closeMenu(() => open('enquiry'))}>
@@ -583,7 +586,7 @@ export default function Keto() {
     </div>
 
     <main>
-      <section id="living" className="amenities-section shell" aria-label="Life at Keto">
+      <section id="living" className="amenities-section shell" aria-label="Hostel Living & Amenities">
         <div className="section-heading">
           <div>
             <span className="eyebrow">FIND YOUR EVERYDAY HAPPY</span>
@@ -825,13 +828,13 @@ export default function Keto() {
 
       <section className="cta-section shell"><div className="cta-symbol">✳</div><div><span className="eyebrow">YOUR NEXT CHAPTER IS WAITING</span><h2>Let’s find where <span className="serif-word">you belong.</span></h2></div><button className="button primary" onClick={() => open('enquiry')}>Enquire now <ArrowUpRight size={18}/></button></section>
     </main>
-    <footer className="shell footer"><div className="footer-brand"><span className="brand-logo-wrap footer-logo-wrap"><Image className="logo-light" src="/logo.webp" alt="Keto" width={106} height={43} unoptimized /><Image className="logo-dark" src="/logowhite.webp" alt="Keto" width={106} height={43} unoptimized /></span><span className="footer-tag">A little closer to home.</span></div><div className="footer-links"><a href="#home">Keto Home</a><a href="#hostels">Our hostels</a><a href="#how-it-works">How it works</a><button onClick={() => open('admission')}>Admission preview <ArrowUpRight size={13}/></button></div><span className="copyright">© {new Date().getFullYear()} Keto · Student living</span></footer>
+    <footer className="shell footer"><div className="footer-brand"><BrandLogo compact /><span className="footer-tag">A little closer to home.</span></div><div className="footer-links"><a href="#home">Home</a><a href="#hostels">Our hostels</a><a href="#how-it-works">How it works</a><button onClick={() => open('admission')}>Admission preview <ArrowUpRight size={13}/></button></div><span className="copyright">© {new Date().getFullYear()} HOSTEL · Student living</span></footer>
 
     {route.view && (
       <Dialog
         className={route.view === 'enquiry' ? 'dialog-enquiry' : route.view === 'admission' ? 'dialog-admission' : 'dialog-hostel'}
         isClosing={viewClosing}
-        title={route.view === 'hostel' ? `${selected.name} (${selected.area})` : route.view === 'enquiry' ? 'Enquire with Keto' : 'Admission application preview'}
+        title={route.view === 'hostel' ? `${selected.name} (${selected.area})` : route.view === 'enquiry' ? 'Hostel Enquiry' : 'Admission application preview'}
         onClose={closeView}
       >
         <button className="icon-button close-button" aria-label="Close dialog" onClick={() => closeView()}><X size={20}/></button>
@@ -1017,7 +1020,7 @@ function HostelDetail({hostel,route,navigate,enquire}:{hostel:Hostel;route:Route
           </div>
         )}
 
-        {/* Facilities Section (8 Core Keto Facilities) */}
+        {/* Facilities Section (8 Core Hostel Facilities) */}
         <div className="detail-amenities-section">
           <div className="detail-amenities-header">
             <h4>Facilities provided</h4>
@@ -1713,7 +1716,7 @@ function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setD
     }
 
     try {
-      win.document.title = `${file.name} - Keto Living`;
+      win.document.title = `${file.name} - Hostel Living`;
       win.document.body.style.margin = '0';
       win.document.body.style.padding = '0';
       win.document.body.style.backgroundColor = isPdf ? '#2b2b2b' : '#0d1117';

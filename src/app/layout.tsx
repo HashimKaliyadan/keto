@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import './globals.css';
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
-  title: { default: 'Keto — A little closer to home', template: '%s | Keto' },
-  description: 'Explore student hostels, discover your space, and arrange a visit with Keto.',
+  title: { default: 'HOSTEL — A little closer to home', template: '%s | HOSTEL' },
+  description: 'Explore verified student hostels, discover your space, and arrange a visit with HOSTEL.',
   icons: {
-    icon: '/emblem.webp',
-    shortcut: '/emblem.webp',
-    apple: '/emblem.webp',
+    icon: '/hostel-icon.svg',
+    shortcut: '/hostel-icon.svg',
+    apple: '/hostel-icon.svg',
   },
   alternates: { canonical: '/' },
   robots: { index: false, follow: false },

@@ -176,29 +176,44 @@ select { cursor: pointer; }
   position: relative;
 }
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.brand-logo-wrap {
-  position: relative;
   display: inline-flex;
   align-items: center;
-  width: 104px;
-  flex-shrink: 0;
+  gap: 12px;
+  text-decoration: none;
+  cursor: pointer;
 }
-.brand-logo-wrap img {
-  width: 104px;
-  height: auto;
-  display: block;
+.brand:hover .hostel-logo-text {
+  filter: brightness(1.1);
+  transform: translateY(-0.5px);
 }
-.footer-logo-wrap {
-  width: 80px;
+.hostel-logo {
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+  line-height: 1;
 }
-.footer-logo-wrap img {
-  width: 80px;
-  height: auto;
-  display: block;
+.hostel-logo-text {
+  font-family: 'Arial Black', Impact, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 900;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #111111 0%, #111111 25%, #8f1f1a 55%, #e73b32 88%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+:root[data-theme=dark] .hostel-logo-text {
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 25%, #f4625b 58%, #e73b32 88%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hostel-logo-compact .hostel-logo-text {
+  font-size: 21px;
 }
 .brand-tag {
   font-size: 11px;
@@ -4451,43 +4466,9 @@ body,
   transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
-/* ── Smooth Logo Crossfade ── */
-.brand-logo-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  width: 104px;
-}
-.brand-logo-wrap .logo-light {
-  display: block;
-  width: 100%;
-  height: auto;
-  transition: opacity 0.35s ease;
-}
-.brand-logo-wrap .logo-dark {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: auto;
-  transition: opacity 0.35s ease;
-}
-.footer-logo-wrap {
-  width: 80px;
-}
-:root[data-theme=dark] .brand-logo-wrap .logo-light {
-  opacity: 0;
-  pointer-events: none;
-}
-:root[data-theme=dark] .brand-logo-wrap .logo-dark {
-  opacity: 1;
-}
-:root:not([data-theme=dark]) .brand-logo-wrap .logo-light {
-  opacity: 1;
-}
-:root:not([data-theme=dark]) .brand-logo-wrap .logo-dark {
-  opacity: 0;
-  pointer-events: none;
+/* ── Brand Title Dark Mode & Transitions ── */
+.brand-title {
+  transition: color 0.35s ease;
 }
 
 /* ── Smooth Theme Icon Morph (Sun / Moon) ── */
