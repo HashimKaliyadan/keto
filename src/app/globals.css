@@ -806,7 +806,7 @@ h2 {
 .listing-tools {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 16px;
   flex-wrap: wrap;
   margin-block: 28px 14px;
@@ -3410,8 +3410,8 @@ body.modal-open {
   }
   .listing-tools .sort-btn span {
     flex: 1;
-    text-align: left;
-    padding-inline-start: 0;
+    text-align: center;
+    padding-inline-start: 8px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
