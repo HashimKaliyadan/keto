@@ -42,19 +42,20 @@ function IronIcon({ size = 21, strokeWidth = 1.5, className = '' }: { size?: num
 type Amenity = {
   Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
   title: string;
+  shortTitle?: string;
   sub?: string;
   mobileSub?: string;
 };
 
 const allAmenities: Amenity[] = [
-  { Icon: Utensils, title: 'Homely Food', sub: 'Daily nutritious home-style meals', mobileSub: 'Homely daily meals' },
-  { Icon: Wifi, title: 'High-Speed Wi-Fi', sub: 'Reliable speed for study & streaming', mobileSub: 'Fast study & streaming' },
-  { Icon: Droplets, title: 'Purified Drinking Water', sub: 'Continuous multi-stage RO filtration', mobileSub: 'Clean RO drinking water' },
-  { Icon: BookOpen, title: 'Quiet Study Spaces', sub: 'Distraction-free focus environments', mobileSub: 'Quiet focus area' },
-  { Icon: Bike, title: 'Vehicle Parking', sub: 'Secure on-premise parking facility', mobileSub: 'Secure on-site parking' },
-  { Icon: WashingMachine, title: 'Washing Machine', sub: 'Fully automatic laundry equipment', mobileSub: 'Automatic laundry care' },
-  { Icon: IronIcon, title: 'Iron Box Station', sub: 'Dedicated pressing & garment care', mobileSub: 'Garment iron station' },
-  { Icon: BroomSparkles, title: 'Weekly Cleaning', sub: 'Regular deep sanitization & upkeep', mobileSub: 'Deep sanitization' },
+  { Icon: Utensils, title: 'Homely Food', shortTitle: 'Homely Food', sub: 'Daily nutritious home-style meals', mobileSub: 'Homely daily meals' },
+  { Icon: Wifi, title: 'High-Speed Wi-Fi', shortTitle: 'Wi-Fi', sub: 'Reliable speed for study & streaming', mobileSub: 'Fast study & streaming' },
+  { Icon: Droplets, title: 'Purified Drinking Water', shortTitle: 'RO Water', sub: 'Continuous multi-stage RO filtration', mobileSub: 'Clean RO drinking water' },
+  { Icon: BookOpen, title: 'Quiet Study Spaces', shortTitle: 'Study Area', sub: 'Distraction-free focus environments', mobileSub: 'Quiet focus area' },
+  { Icon: Bike, title: 'Vehicle Parking', shortTitle: 'Parking', sub: 'Secure on-premise parking facility', mobileSub: 'Secure on-site parking' },
+  { Icon: WashingMachine, title: 'Washing Machine', shortTitle: 'Washing M/C', sub: 'Fully automatic laundry equipment', mobileSub: 'Automatic laundry care' },
+  { Icon: IronIcon, title: 'Iron Box Station', shortTitle: 'Ironing', sub: 'Dedicated pressing & garment care', mobileSub: 'Garment iron station' },
+  { Icon: BroomSparkles, title: 'Weekly Cleaning', shortTitle: 'Cleaning', sub: 'Regular deep sanitization & upkeep', mobileSub: 'Deep sanitization' },
 ];
 
 const row1Amenities: Amenity[] = allAmenities;
@@ -84,8 +85,42 @@ function AmenityCardItem({ Icon, title, sub, mobileSub }: Amenity) {
 
 
 
-function Dialog({ children, onClose, title, small = false }: { children: React.ReactNode; onClose: () => void; title: string; small?: boolean }) {
+function Dialog({
+  children,
+  onClose,
+  title,
+  small = false,
+  className = '',
+  isClosing = false,
+}: {
+  children: React.ReactNode;
+  onClose: () => void;
+  title: string;
+  small?: boolean;
+  className?: string;
+  isClosing?: boolean;
+}) {
   const ref = useRef<HTMLDialogElement>(null);
+  const [internalClosing, setInternalClosing] = useState(false);
+  const internalTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleClose = useCallback(() => {
+    if (isClosing || internalClosing) return;
+    setInternalClosing(true);
+    if (internalTimer.current) clearTimeout(internalTimer.current);
+    internalTimer.current = setTimeout(() => {
+      onClose();
+    }, 220);
+  }, [isClosing, internalClosing, onClose]);
+
+  useEffect(() => {
+    return () => {
+      if (internalTimer.current) clearTimeout(internalTimer.current);
+    };
+  }, []);
+
+  const activeClosing = isClosing || internalClosing;
+
   useEffect(() => {
     const dialog = ref.current;
     const active = document.activeElement as HTMLElement | null;
@@ -117,7 +152,28 @@ function Dialog({ children, onClose, title, small = false }: { children: React.R
       window.removeEventListener('touchmove', preventBackgroundTouch);
     };
   }, []);
-  return <dialog ref={ref} className={`dialog ${small ? 'dialog-small' : ''}`} aria-label={title} onCancel={e => { e.preventDefault(); onClose(); }} onClick={e => { if (e.target === e.currentTarget) { const bounds = e.currentTarget.getBoundingClientRect(); if (e.clientX < bounds.left || e.clientX > bounds.right || e.clientY < bounds.top || e.clientY > bounds.bottom) onClose(); } }}><div className="dialog-inner">{children}</div></dialog>;
+
+  return (
+    <dialog
+      ref={ref}
+      className={`dialog ${small ? 'dialog-small' : ''} ${className} ${activeClosing ? 'is-closing' : ''}`.trim()}
+      aria-label={title}
+      onCancel={e => {
+        e.preventDefault();
+        handleClose();
+      }}
+      onClick={e => {
+        if (e.target === e.currentTarget) {
+          const bounds = e.currentTarget.getBoundingClientRect();
+          if (e.clientX < bounds.left || e.clientX > bounds.right || e.clientY < bounds.top || e.clientY > bounds.bottom) {
+            handleClose();
+          }
+        }
+      }}
+    >
+      <div className="dialog-inner">{children}</div>
+    </dialog>
+  );
 }
 
 function FinderSelect({ label, value, options, onChange, icon: Icon, ariaLabel }: { label: string; value: string; options: string[]; onChange: (val: string) => void; icon: React.ComponentType<{ size?: number; className?: string }>; ariaLabel: string }) {
@@ -395,10 +451,32 @@ export default function Keto() {
       setMenu(true);
     }
   }, [menu, closeMenu]);
+  const [viewClosing, setViewClosing] = useState(false);
+  const viewCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const closeView = useCallback((onDone?: () => void) => {
+    if (!route.view || viewClosing) return;
+    if (dirty) {
+      pending.current = () => {
+        setViewClosing(false);
+        applyRoute(baseRoute);
+        onDone?.();
+      };
+      setDiscard(true);
+      return;
+    }
+    setViewClosing(true);
+    if (viewCloseTimer.current) clearTimeout(viewCloseTimer.current);
+    viewCloseTimer.current = setTimeout(() => {
+      setViewClosing(false);
+      applyRoute(baseRoute);
+      onDone?.();
+    }, 220);
+  }, [route.view, viewClosing, dirty, applyRoute]);
 
   useEffect(() => {
     return () => {
-      if (closeTimer.current) clearTimeout(closeTimer.current);
+      if (viewCloseTimer.current) clearTimeout(viewCloseTimer.current);
     };
   }, []);
 
@@ -749,13 +827,129 @@ export default function Keto() {
     </main>
     <footer className="shell footer"><div className="footer-brand"><span className="brand-logo-wrap footer-logo-wrap"><Image className="logo-light" src="/logo.webp" alt="Keto" width={106} height={43} unoptimized /><Image className="logo-dark" src="/logowhite.webp" alt="Keto" width={106} height={43} unoptimized /></span><span className="footer-tag">A little closer to home.</span></div><div className="footer-links"><a href="#home">Keto Home</a><a href="#hostels">Our hostels</a><a href="#how-it-works">How it works</a><button onClick={() => open('admission')}>Admission preview <ArrowUpRight size={13}/></button></div><span className="copyright">© {new Date().getFullYear()} Keto · Student living</span></footer>
 
-    {route.view && <Dialog title={route.view === 'hostel' ? `${selected.name} (${selected.area})` : route.view === 'enquiry' ? 'Enquire with Keto' : 'Admission application preview'} onClose={() => navigate({...baseRoute})}><button className="icon-button close-button" aria-label="Close dialog" onClick={() => navigate({...baseRoute})}><X size={20}/></button>{route.view === 'hostel' ? <HostelDetail hostel={selected} route={route} navigate={navigate} enquire={() => open('enquiry')} /> : <Application key={route.view} admission={route.view === 'admission'} setDirty={updateDirty} onDone={() => {updateDirty(false);setToast(route.view === 'admission' ? 'Registration application submitted.' : 'Enquiry submitted successfully.');}} onClose={() => navigate({...baseRoute})} />}</Dialog>}
+    {route.view && (
+      <Dialog
+        className={route.view === 'enquiry' ? 'dialog-enquiry' : route.view === 'admission' ? 'dialog-admission' : 'dialog-hostel'}
+        isClosing={viewClosing}
+        title={route.view === 'hostel' ? `${selected.name} (${selected.area})` : route.view === 'enquiry' ? 'Enquire with Keto' : 'Admission application preview'}
+        onClose={closeView}
+      >
+        <button className="icon-button close-button" aria-label="Close dialog" onClick={() => closeView()}><X size={20}/></button>
+        {route.view === 'hostel' ? (
+          <HostelDetail hostel={selected} route={route} navigate={navigate} enquire={() => open('enquiry')} />
+        ) : (
+          <Application
+            key={route.view}
+            admission={route.view === 'admission'}
+            setDirty={updateDirty}
+            onDone={() => {
+              updateDirty(false);
+              setToast(route.view === 'admission' ? 'Registration application submitted.' : 'Enquiry submitted successfully.');
+            }}
+            onClose={closeView}
+          />
+        )}
+      </Dialog>
+    )}
     {discard && <Dialog title="Discard unsaved changes?" small onClose={() => {setDiscard(false);pending.current=null;}}><div className="form-heading"><span className="form-icon"><ShieldCheck/></span><h2>Leave this form?</h2><p>Your unsaved details and selected files will be cleared.</p></div><div className="confirm-actions"><button className="button secondary" onClick={() => {setDiscard(false);pending.current=null;}}>Keep editing</button><button className="button primary" onClick={() => {updateDirty(false);setDiscard(false);pending.current?.();pending.current=null;}}>Discard changes</button></div></Dialog>}
     {toast && <div className="toast" role="status"><CheckCircle2 size={20}/><span>{toast}</span><button aria-label="Dismiss notification" onClick={() => setToast('')}><X size={16}/></button></div>}
   </>;
 }
 
+function SelectorDropdown<T extends string | number>({
+  icon: Icon,
+  caption,
+  value,
+  options,
+  onChange,
+}: {
+  icon?: React.ComponentType<{ size?: number; className?: string }>;
+  caption: string;
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (val: T) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const currentLabel = options.find(o => o.value === value)?.label || String(value);
+
+  useEffect(() => {
+    if (!open) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div className={`sort-wrap browser-dropdown-wrap ${open ? 'sort-open' : ''}`} ref={ref}>
+      <span className="sort-caption">
+        {Icon && <Icon size={14} className="dropdown-caption-icon" />}
+        {caption}
+      </span>
+      <div className="sort-btn-wrap">
+        <button
+          type="button"
+          className="sort-btn"
+          onClick={() => setOpen(prev => !prev)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-label={`Select ${caption}`}
+        >
+          <span>{currentLabel}</span>
+          <ChevronDown size={15} className={`sort-chevron ${open ? 'rotated' : ''}`} />
+        </button>
+
+        {open && (
+          <ul className="sort-menu" role="listbox" aria-label={`${caption} options`}>
+            {options.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <li
+                  key={String(opt.value)}
+                  role="option"
+                  aria-selected={isSelected}
+                  className={`sort-item ${isSelected ? 'selected' : ''}`}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                >
+                  <span>{opt.label}</span>
+                  {isSelected && <Check size={15} className="item-check" />}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function HostelDetail({hostel,route,navigate,enquire}:{hostel:Hostel;route:Route;navigate:(route:Route)=>void;enquire:()=>void}) {
+  const [selectedSharing, setSelectedSharing] = useState<number>(() => {
+    if (hostel.sharingOptions && hostel.sharingOptions.length > 0) {
+      const has4 = hostel.sharingOptions.some(o => o.sharing === 4);
+      return has4 ? 4 : hostel.sharingOptions[0].sharing;
+    }
+    return 4;
+  });
+
+  const currentPlan = hostel.sharingOptions?.find(o => o.sharing === selectedSharing);
+  const currentPrice = currentPlan ? currentPlan.price : (hostel.price || 6500);
+
+  const bunksCount = Math.max(1, Math.ceil(selectedSharing / 2));
+  const bunkLetters = ['A', 'B', 'C', 'D'].slice(0, bunksCount);
+
   return (
     <div className="hostel-detail">
       <div className="detail-cover">
@@ -785,43 +979,63 @@ function HostelDetail({hostel,route,navigate,enquire}:{hostel:Hostel;route:Route
               <span className="contact-number">{hostel.phoneDisplay}</span>
             </div>
             <a href={`tel:${hostel.phone}`} className="button primary call-button">
-              <Phone size={15}/> Call {hostel.contactRole}
+              <Phone size={15}/> Call
             </a>
           </div>
         )}
 
-        {/* Stay + Food Sharing Plans */}
+        {/* Facilities Section (8 Core Keto Facilities) */}
+        <div className="detail-amenities-section">
+          <div className="detail-amenities-header">
+            <h4>Facilities provided</h4>
+          </div>
+          <div className="modal-facilities-grid">
+            {allAmenities.map(({ Icon, title, shortTitle }) => (
+              <div className="modal-facility-item" key={title}>
+                <div className="facility-icon-wrap">
+                  <Icon size={15} strokeWidth={1.8} />
+                </div>
+                <div className="facility-details">
+                  <span className="facility-title">{shortTitle || title}</span>
+                </div>
+                <span className="facility-check-dot">
+                  <Check size={10} strokeWidth={3} />
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Sharing Option Selection Box */}
         {hostel.sharingOptions && hostel.sharingOptions.length > 0 && (
           <div className="detail-plans-box">
             <div className="plans-header">
-              <h4>STAY + FOOD PLANS</h4>
-              <span className="maint-charge">{hostel.maintenanceFee || '₹1,000 for 3 months'}</span>
+              <h4>SELECT ROOM SHARING</h4>
+              <span className="maint-charge">Select an option to view beds</span>
             </div>
-            <div className="plans-grid">
-              {hostel.sharingOptions.map(opt => (
-                <div className="plan-item" key={opt.sharing}>
-                  <span className="plan-sharing-title">{opt.sharing} Sharing</span>
-                  <strong className="plan-price-num">₹{money(opt.price)}<span> / month</span></strong>
-                  <span className="plan-sub">Stay + Homely Food included</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Facilities Section */}
-        {hostel.features && hostel.features.length > 0 && (
-          <div className="detail-amenities-section">
-            <h4>Facilities provided</h4>
-            <div className="detail-amenities">
-              {hostel.features.map(f => {
-                const Icon = amenityIcons[f] || Check;
+            <div className="plans-grid" role="radiogroup" aria-label="Select sharing option">
+              {hostel.sharingOptions.map(opt => {
+                const isSelected = selectedSharing === opt.sharing;
                 return (
-                  <span key={f}>
-                    <Check size={14} className="amenity-check" />
-                    <Icon size={14} />
-                    {f}
-                  </span>
+                  <button
+                    type="button"
+                    className={`plan-item ${isSelected ? 'selected' : ''}`}
+                    key={opt.sharing}
+                    onClick={() => setSelectedSharing(opt.sharing)}
+                    role="radio"
+                    aria-checked={isSelected}
+                  >
+                    <div className="plan-item-top">
+                      <div className="plan-title-wrap">
+                        <BedDouble size={16} className="plan-icon" />
+                        <span className="plan-sharing-title">{opt.sharing} Sharing</span>
+                      </div>
+                      <span className={`plan-choice-badge ${isSelected ? 'selected' : ''}`}>
+                        {isSelected ? <><Check size={11} strokeWidth={3} /> Selected</> : 'Select'}
+                      </span>
+                    </div>
+                    <span className="plan-sub">{opt.sharing} beds room layout</span>
+                  </button>
                 );
               })}
             </div>
@@ -832,29 +1046,49 @@ function HostelDetail({hostel,route,navigate,enquire}:{hostel:Hostel;route:Route
         <div className="bed-browser">
           <div className="browser-heading">
             <h3>Find your corner</h3>
-            <span className="pill">Sample layout</span>
           </div>
-          <label className="floor-label"><Layers size={16}/> Floor</label>
-          <div className="floor-tabs" role="group" aria-label="Select floor">
-            {[1,2,3].map(f => <button className={`chip ${route.floor === f ? 'active' : ''}`} key={f} onClick={() => navigate({...route,floor:f,room:f*100+1})}>Floor {f}</button>)}
-          </div>
-          <label className="floor-label"><DoorOpen size={16}/> Room</label>
-          <div className="floor-tabs">
-            {[1,2,3].map(n => <button key={n} className={`chip ${route.room === route.floor*100+n ? 'active' : ''}`} onClick={() => navigate({...route,room:route.floor*100+n})}>Room {route.floor*100+n}</button>)}
+
+          <div className="bed-browser-tools">
+            <SelectorDropdown
+              icon={Layers}
+              caption="Floor"
+              value={route.floor || 1}
+              options={[
+                { value: 1, label: 'Floor 1' },
+                { value: 2, label: 'Floor 2' },
+                { value: 3, label: 'Floor 3' },
+              ]}
+              onChange={(f) => navigate({ ...route, floor: f, room: f * 100 + (((route.room - 1) % 100 % 3) + 1) })}
+            />
+            <SelectorDropdown
+              icon={DoorOpen}
+              caption="Room"
+              value={route.room || (route.floor || 1) * 100 + 1}
+              options={[1, 2, 3].map(n => {
+                const roomNum = (route.floor || 1) * 100 + n;
+                return { value: roomNum, label: `Room ${roomNum}` };
+              })}
+              onChange={(r) => navigate({ ...route, room: r })}
+            />
           </div>
           <div className="room-plan">
-            <div className="room-label">ROOM {route.room} <span>4 & 6 sharing layout options</span></div>
-            <div className="bunk-grid">
-              {['A','B'].map((b,idx) => (
+            <div className="room-label">
+              <strong>ROOM {route.room}</strong>
+            </div>
+            <div className={`bunk-grid bunks-${bunkLetters.length}`}>
+              {bunkLetters.map((b, idx) => (
                 <div className="bunk" key={b}>
                   <span>BUNK {b}</span>
-                  {['Upper','Lower'].map((level,j) => {
-                    const occupied = (route.room+idx+j)%3===0;
+                  {['Upper', 'Lower'].map((level, j) => {
+                    const occupied = (route.room + idx * 2 + j) % 3 === 0;
                     return (
-                      <div className={`bed ${occupied?'occupied':'available'}`} key={level}>
-                        <BedDouble size={23}/>
-                        <div><strong>{b}{j+1} · {level}</strong><span>{occupied?'Occupied':'Available'}</span></div>
-                        {!occupied && <Check size={15}/>}
+                      <div className={`bed ${occupied ? 'occupied' : 'available'}`} key={level}>
+                        <BedDouble size={22} />
+                        <div>
+                          <strong>{b}{j + 1} · {level}</strong>
+                          <span>{occupied ? 'Occupied' : 'Available'}</span>
+                        </div>
+                        {!occupied && <Check size={14} strokeWidth={2.8} />}
                       </div>
                     );
                   })}
@@ -866,14 +1100,23 @@ function HostelDetail({hostel,route,navigate,enquire}:{hostel:Hostel;route:Route
           <div className="bed-legend">
             <span><i className="legend-available"/>Available</span>
             <span><i className="legend-occupied"/>Occupied</span>
-            <small>Confirm your bed with {hostel.contactRole ? `${hostel.contactRole.toLowerCase()} ${hostel.phoneDisplay || ''}` : 'the warden'} during your visit.</small>
           </div>
+
+          <ul className="bed-notice-points">
+            <li>
+              Confirm your bed with {hostel.contactRole === 'Warden' ? 'the warden' : 'hostel contact'}{' '}
+              <strong>{hostel.phoneDisplay || ''}</strong> during your visit.
+            </li>
+            <li className="point-maintenance">
+              Maintenance fee is <strong>{hostel.maintenanceFee || '₹1,000 for 3 months'}</strong>.
+            </li>
+          </ul>
         </div>
 
         <div className="detail-bottom">
           <div>
-            <small>Starting from (Stay + Food)</small>
-            <strong>₹{money(hostel.price || 6500)} <span>/ month</span></strong>
+            <small>{selectedSharing} Sharing Room</small>
+            <strong>₹{money(currentPrice)} <span>/ month</span></strong>
           </div>
           <button className="button primary" onClick={enquire}>Arrange a visit <ArrowUpRight size={17}/></button>
         </div>
@@ -883,10 +1126,27 @@ function HostelDetail({hostel,route,navigate,enquire}:{hostel:Hostel;route:Route
 }
 
 
-const emptyFields = {name:'',phone:'',college:'',email:'',guardian:'',guardianPhone:'',address:''};
+const emptyFields = {
+  name: '',
+  age: '',
+  phone: '',
+  email: '',
+  aadhaarNumber: '',
+  college: '',
+  guardian: '',
+  guardianPhone: '',
+  guardianAadhaar: '',
+  admissionDate: '',
+  address: '',
+};
 type Fields = typeof emptyFields;
 function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setDirty:(value:boolean)=>void;onDone:()=>void;onClose?:()=>void}) {
-  const [submittedInfo, setSubmittedInfo] = useState<{name: string; phone: string}>({name: '', phone: ''});
+  const [submittedInfo, setSubmittedInfo] = useState<{
+    name: string;
+    phone: string;
+    admissionDate?: string;
+    aadhaarNumber?: string;
+  }>({ name: '', phone: '', admissionDate: '', aadhaarNumber: '' });
   const [fields,setFields] = useState<Fields>({...emptyFields});
   const [step,setStep] = useState(1);
   const [photo,setPhoto] = useState<File | null>(null);
@@ -991,38 +1251,90 @@ function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setD
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const form = useRef<HTMLFormElement>(null);
   useEffect(() => () => { if(timer.current) clearTimeout(timer.current); setDirty(false); }, [setDirty]);
+
   function error(key:keyof Fields) {
     const value = fields[key].trim();
     if(!value) return 'This field is required.';
-    if((key === 'phone' || key === 'guardianPhone') && !/^[6-9]\d{9}$/.test(value)) return 'Enter a valid 10-digit Indian mobile number.';
-    if(key === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Enter a valid email address.';
-    if((key === 'name' || key === 'guardian') && value.length < 2) return 'Enter at least 2 characters.';
+    if(key === 'age') {
+      const num = parseInt(value, 10);
+      if(isNaN(num) || num < 15 || num > 99) return 'Enter a valid age (15–99).';
+    }
+    if((key === 'phone' || key === 'guardianPhone') && !/^[6-9]\d{9}$/.test(value)) {
+      return 'Enter a valid 10-digit Indian mobile number.';
+    }
+    if((key === 'aadhaarNumber' || key === 'guardianAadhaar') && !/^\d{12}$/.test(value)) {
+      return 'Enter a valid 12-digit Aadhaar number.';
+    }
+    if(key === 'admissionDate') {
+      const d = new Date(value);
+      if(isNaN(d.getTime())) return 'Please enter a valid date.';
+    }
+    if(key === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+      return 'Enter a valid email address.';
+    }
+    if((key === 'name' || key === 'guardian') && value.length < 2) {
+      return 'Enter at least 2 characters.';
+    }
+    if(key === 'college' && value.length < 2) {
+      return 'Enter at least 2 characters.';
+    }
+    if(key === 'address' && value.length < 5) {
+      return 'Enter a complete address (at least 5 characters).';
+    }
     return '';
   }
-  const required: (keyof Fields)[] = admission ? step === 1 ? ['name','phone','college','email'] : ['guardian','guardianPhone','address'] : ['name','phone','college'];
+
+  const required: (keyof Fields)[] = admission
+    ? step === 1
+      ? ['name', 'age', 'phone', 'email', 'aadhaarNumber', 'college']
+      : ['guardian', 'guardianPhone', 'guardianAadhaar', 'admissionDate', 'address']
+    : ['name', 'phone', 'college'];
+
   const valid = admission && step === 3 ? !!photo && !!aadhaar && consent : required.every(k => !error(k));
-  function field(key:keyof Fields,label:string,placeholder:string,maxLength:number,type='text') {
+
+  function field(
+    key: keyof Fields,
+    label: string,
+    placeholder: string,
+    maxLength: number,
+    type = 'text',
+    className?: string
+  ) {
     const err = touched.includes(key) ? error(key) : '';
+    const isNumeric = type === 'tel' || key === 'age' || key === 'aadhaarNumber' || key === 'guardianAadhaar';
     return (
-      <label className="input-label" key={key}>
+      <label className={`input-label ${className || ''}`} key={key}>
         <span>{label} <span className="required">*</span></span>
         <input
           name={key}
-          dir={type === 'tel' || type === 'email' ? 'ltr' : 'auto'}
+          dir={type === 'tel' || type === 'email' || type === 'date' ? 'ltr' : 'auto'}
           type={type}
-          maxLength={maxLength}
-          inputMode={type === 'tel' ? 'numeric' : type === 'email' ? 'email' : 'text'}
-          autoComplete={key === 'name' ? 'name' : key === 'phone' ? 'tel-national' : key === 'email' ? 'email' : 'off'}
+          maxLength={type === 'date' ? undefined : maxLength}
+          inputMode={isNumeric ? 'numeric' : type === 'email' ? 'email' : undefined}
+          autoComplete={
+            key === 'name' ? 'name' :
+            key === 'phone' ? 'tel-national' :
+            key === 'email' ? 'email' :
+            key === 'address' ? 'street-address' :
+            'off'
+          }
           placeholder={placeholder}
           value={fields[key]}
           aria-invalid={!!err}
           aria-describedby={err ? `${key}-error` : undefined}
-          onBlur={() => setTouched(prev => [...new Set([...prev,key])])}
+          onBlur={() => setTouched(prev => [...new Set([...prev, key])])}
           onChange={e => {
-            const value = type === 'tel' ? e.target.value.replace(/\D/g,'').slice(0,10) : e.target.value;
-            setFields(prev => ({...prev,[key]:value}));
+            let value = e.target.value;
+            if (key === 'phone' || key === 'guardianPhone') {
+              value = value.replace(/\D/g, '').slice(0, 10);
+            } else if (key === 'aadhaarNumber' || key === 'guardianAadhaar') {
+              value = value.replace(/\D/g, '').slice(0, 12);
+            } else if (key === 'age') {
+              value = value.replace(/\D/g, '').slice(0, 2);
+            }
+            setFields(prev => ({...prev, [key]: value}));
             setDirty(true);
-            setTouched(prev => [...new Set([...prev,key])]);
+            setTouched(prev => [...new Set([...prev, key])]);
           }}
           required
         />
@@ -1032,7 +1344,9 @@ function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setD
       </label>
     );
   }
+
   function fileChange(file:File|undefined,kind:'photo'|'aadhaar') {if(!file)return;const allowed = kind === 'photo' ? ['image/jpeg','image/png','image/webp'] : ['image/jpeg','image/png','image/webp','application/pdf'];if(!allowed.includes(file.type)||file.size>5*1024*1024){setFileError('Choose a supported file smaller than 5 MB.');return;}setFileError('');if(kind === 'photo')setPhoto(file);else setAadhaar(file);setDirty(true);}
+
   function submit(e:React.FormEvent) {
     e.preventDefault();
     if(!valid||locked.current) return;
@@ -1044,7 +1358,12 @@ function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setD
     locked.current = true;
     setBusy(true);
     track(admission ? 'admission_preview_submit' : 'enquiry_preview_submit');
-    setSubmittedInfo({ name: fields.name.trim(), phone: fields.phone.trim() });
+    setSubmittedInfo({
+      name: fields.name.trim(),
+      phone: fields.phone.trim(),
+      admissionDate: fields.admissionDate.trim(),
+      aadhaarNumber: fields.aadhaarNumber.trim(),
+    });
     timer.current = setTimeout(() => {
       setFields({...emptyFields});
       setPhoto(null);
@@ -1059,6 +1378,7 @@ function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setD
       onDone();
     }, 650);
   }
+
   if(done) {
     return (
       <div className={`application ${admission ? 'registration-modal' : 'enquiry-modal'} is-done`}>
@@ -1085,6 +1405,18 @@ function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setD
                   <span className="voucher-label">Contact Number</span>
                   <strong>{submittedInfo.phone ? `+91 ${submittedInfo.phone}` : '+91 —'}</strong>
                 </div>
+                {submittedInfo.admissionDate && (
+                  <div className="voucher-item">
+                    <span className="voucher-label">Date of Admission</span>
+                    <strong>{submittedInfo.admissionDate}</strong>
+                  </div>
+                )}
+                {submittedInfo.aadhaarNumber && (
+                  <div className="voucher-item">
+                    <span className="voucher-label">Applicant Aadhaar</span>
+                    <strong>•••• •••• {submittedInfo.aadhaarNumber.slice(-4)}</strong>
+                  </div>
+                )}
               </div>
               <p>Your admission details and room reservation have been recorded. Our warden and administrative team will review your documents and reach out with your onboarding schedule.</p>
             </>
@@ -1095,7 +1427,15 @@ function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setD
             <button className="button primary success-close-btn" type="button" onClick={onClose}>
               <span>Back to website</span> <Check size={15}/>
             </button>
-            <button className="button secondary success-retry-btn" type="button" onClick={() => { setDone(false); setStep(1); setSubmittedInfo({ name: '', phone: '' }); }}>
+            <button
+              className="button secondary success-retry-btn"
+              type="button"
+              onClick={() => {
+                setDone(false);
+                setStep(1);
+                setSubmittedInfo({ name: '', phone: '', admissionDate: '', aadhaarNumber: '' });
+              }}
+            >
               <span>Submit another</span> <RotateCcw size={14}/>
             </button>
           </div>
@@ -1109,7 +1449,6 @@ function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setD
       <div className="application registration-modal">
         <div className="reg-header">
           <div className="reg-top-meta">
-            <span className="reg-badge"><ShieldCheck size={13}/> OFFICIAL ADMISSION</span>
             <span className="reg-step-pill">Step {step} of 3</span>
           </div>
           <h2>Student Registration</h2>
@@ -1145,8 +1484,8 @@ function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setD
           </div>
           <div className="reg-steps-row">
             {[
-              { num: 1, title: 'Your details', desc: 'Basic info' },
-              { num: 2, title: 'Contact & address', desc: 'Guardian info' },
+              { num: 1, title: 'Your details', desc: 'Applicant info' },
+              { num: 2, title: 'Guardian & date', desc: 'Family & address' },
               { num: 3, title: 'Documents', desc: 'ID & photo' }
             ].map(({ num, title, desc }) => (
               <div key={num} className={`reg-step-node ${step === num ? 'active' : step > num ? 'done' : ''}`}>
@@ -1165,19 +1504,27 @@ function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setD
         <form ref={form} onSubmit={submit} noValidate>
           {step === 1 && (
             <div className="reg-grid">
-              {field('name','Full name','Enter your full name',100)}
-              {field('phone','Phone number','Enter 10-digit mobile number',10,'tel')}
-              {field('college','College / Institution','Enter your college or institution',160)}
-              {field('email','Email address','Enter your email address',254,'email')}
+              {field('name','Applicant full name','Enter your full name',100)}
+              {field('age','Age','Enter age (e.g. 21)',2,'text')}
+              {field('phone','Mobile number','Enter 10-digit mobile number',10,'tel')}
+              {field('email','Email address','Enter email address',254,'email')}
+              <div className="reg-col-full">
+                {field('aadhaarNumber','Applicant Aadhaar card number','Enter 12-digit Aadhaar number',12,'tel')}
+              </div>
+              <div className="reg-col-full">
+                {field('college','Name of Office / College with address','Enter office or college name and full address',200)}
+              </div>
             </div>
           )}
 
           {step === 2 && (
             <div className="reg-grid">
-              {field('guardian','Parent / Guardian name','Enter parent or guardian name',100)}
-              {field('guardianPhone','Parent / Guardian phone','Enter 10-digit mobile number',10,'tel')}
+              {field('guardian','Name of Guardian / Parent','Enter parent or guardian name',100)}
+              {field('guardianPhone','Guardian mobile number','Enter 10-digit mobile number',10,'tel')}
+              {field('guardianAadhaar','Guardian Aadhaar card number','Enter 12-digit Aadhaar number',12,'tel')}
+              {field('admissionDate','Date of admission','YYYY-MM-DD',20,'date')}
               <div className="reg-col-full">
-                {field('address','Permanent address','Enter street, city, state, and PIN code',500)}
+                {field('address','Permanent address with PIN','Enter permanent street address, city, district & PIN code',500)}
               </div>
             </div>
           )}
