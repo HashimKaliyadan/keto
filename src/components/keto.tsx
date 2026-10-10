@@ -339,8 +339,6 @@ export default function Keto() {
   const [toast, setToast] = useState('');
   const [faq, setFaq] = useState<number | null>(0);
   const [scrolled, setScrolled] = useState(false);
-  const [headerVisible, setHeaderVisible] = useState(true);
-  const lastScrollY = useRef(0);
   const updateDirty = useCallback((value: boolean) => { dirtyRef.current = value; setDirty(value); }, []);
   const applyRoute = useCallback((next: Route, replace = false) => {
     const url = new URL(window.location.href);
@@ -351,41 +349,11 @@ export default function Keto() {
     setRoute(next);
   }, []);
   useEffect(() => {
-    let ticking = false;
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          setScrolled(currentScrollY > 20);
-
-          if (menu) {
-            setHeaderVisible(true);
-            lastScrollY.current = Math.max(0, currentScrollY);
-            ticking = false;
-            return;
-          }
-
-          if (currentScrollY <= 40) {
-            setHeaderVisible(true);
-          } else {
-            const delta = currentScrollY - lastScrollY.current;
-            if (delta > 6) {
-              setHeaderVisible(false);
-            } else if (delta < -6) {
-              setHeaderVisible(true);
-            }
-          }
-
-          lastScrollY.current = Math.max(0, currentScrollY);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [menu]);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
   useEffect(() => {
     const initial = readRoute(); setRoute(initial); routeRef.current = initial;
     const savedTheme = localStorage.getItem('keto-theme');
@@ -470,48 +438,13 @@ export default function Keto() {
     <div className="hero-screen-wrapper">
       <div className="announcement"><span className="announcement-dot" /> A new city. A familiar feeling. <span className="announcement-extra">Find your place with Keto.</span></div>
       <div className="header-slot">
-        <header className={`header-wrapper ${scrolled ? 'header-scrolled' : ''} ${!headerVisible && scrolled ? 'header-hidden' : ''}`}>
+        <header className={`header-wrapper ${scrolled ? 'header-scrolled' : ''}`}>
           <div className="site-header shell">
             <a href="/" aria-label="Keto home" className="brand"><span className="brand-logo-wrap"><Image className="logo-light" src="/logo.webp" width={133} height={54} alt="Keto" priority unoptimized /><Image className="logo-dark" src="/logowhite.webp" width={133} height={54} alt="Keto" priority unoptimized /></span><span className="brand-tag">student living</span></a>
-            {isMenuVisible && (
-              <div
-                className={`nav-backdrop ${menuClosing ? 'nav-backdrop-closing' : ''}`}
-                onClick={() => closeMenu()}
-                aria-hidden="true"
-              />
-            )}
-            <nav
-              className={
-                isMenuVisible
-                  ? `nav nav-open ${menuClosing ? 'nav-closing' : ''}`
-                  : 'nav'
-              }
-              aria-label="Main navigation"
-            >
-              <div className="sheet-handle" aria-hidden="true" />
-              <div className="mobile-nav-header">
-                <a href="/" aria-label="Keto home" className="brand" onClick={() => closeMenu()}>
-                  <span className="brand-logo-wrap">
-                    <Image className="logo-light" src="/logo.webp" width={110} height={45} alt="Keto" priority unoptimized />
-                    <Image className="logo-dark" src="/logowhite.webp" width={110} height={45} alt="Keto" priority unoptimized />
-                  </span>
-                  <span className="brand-tag">student living</span>
-                </a>
-                <div className="mobile-nav-actions">
-                  <button className="icon-button theme-toggle" aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'} onClick={toggleTheme}>
-                    <span className="theme-icon-wrap"><Sun className="theme-icon sun-icon" size={18} /><Moon className="theme-icon moon-icon" size={18} /></span>
-                  </button>
-                  <button className="icon-button mobile-nav-close" aria-label="Close navigation" onClick={() => closeMenu()}>
-                    <X size={22} />
-                  </button>
-                </div>
-              </div>
-              <a href="#home" onClick={() => closeMenu()}>Keto Home</a>
-              <a href="#hostels" onClick={() => closeMenu()}>Our hostels</a>
-              <a href="#how-it-works" onClick={() => closeMenu()}>How it works</a>
-              <button className="button primary mobile-nav-cta" onClick={() => closeMenu(() => open('enquiry'))}>
-                Find my space <ArrowUpRight size={17} />
-              </button>
+            <nav className="nav" aria-label="Main navigation">
+              <a href="#home">Keto Home</a>
+              <a href="#hostels">Our hostels</a>
+              <a href="#how-it-works">How it works</a>
             </nav>
             <div className="header-actions">
               <button className="icon-button theme-toggle" aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'} onClick={toggleTheme}>
@@ -525,6 +458,45 @@ export default function Keto() {
           </div>
         </header>
       </div>
+
+      {isMenuVisible && (
+        <>
+          <div
+            className={`nav-backdrop ${menuClosing ? 'nav-backdrop-closing' : ''}`}
+            onClick={() => closeMenu()}
+            aria-hidden="true"
+          />
+          <nav
+            className={`mobile-nav-sheet ${menuClosing ? 'sheet-closing' : ''}`}
+            aria-label="Mobile navigation"
+          >
+            <div className="sheet-handle" aria-hidden="true" />
+            <div className="mobile-nav-header">
+              <a href="/" aria-label="Keto home" className="brand" onClick={() => closeMenu()}>
+                <span className="brand-logo-wrap">
+                  <Image className="logo-light" src="/logo.webp" width={110} height={45} alt="Keto" priority unoptimized />
+                  <Image className="logo-dark" src="/logowhite.webp" width={110} height={45} alt="Keto" priority unoptimized />
+                </span>
+                <span className="brand-tag">student living</span>
+              </a>
+              <div className="mobile-nav-actions">
+                <button className="icon-button theme-toggle" aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'} onClick={toggleTheme}>
+                  <span className="theme-icon-wrap"><Sun className="theme-icon sun-icon" size={18} /><Moon className="theme-icon moon-icon" size={18} /></span>
+                </button>
+                <button className="icon-button mobile-nav-close" aria-label="Close navigation" onClick={() => closeMenu()}>
+                  <X size={22} />
+                </button>
+              </div>
+            </div>
+            <a href="#home" onClick={() => closeMenu()}>Keto Home</a>
+            <a href="#hostels" onClick={() => closeMenu()}>Our hostels</a>
+            <a href="#how-it-works" onClick={() => closeMenu()}>How it works</a>
+            <button className="button primary mobile-nav-cta" onClick={() => closeMenu(() => open('enquiry'))}>
+              Find my space <ArrowUpRight size={17} />
+            </button>
+          </nav>
+        </>
+      )}
 
       <section id="home" className="hero shell">
         <div className="hero-copy"><div className="eyebrow"><span className="tiny-line" /> MORE THAN A PLACE TO STAY</div><h1>A little closer<br />to <span className="serif-word">home.</span><span className="hero-asterisk">✳</span></h1><p>Student living that feels right, from day one.</p><div className="hero-actions"><a href="#hostels" className="button primary">Explore our hostels <ArrowUpRight size={18} /></a><a href="#how-it-works" className="button secondary">How it works <ArrowRight size={17} /></a></div><div className="hero-note"><span>Explore online. Visit in person. Feel at home.</span></div></div>

@@ -152,10 +152,7 @@ select { cursor: pointer; }
   background: var(--bg);
   border-bottom: 1px solid transparent;
   box-shadow: 0 0 0 transparent;
-  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.25s ease,
-              box-shadow 0.25s ease;
-  will-change: transform;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 .header-wrapper.header-scrolled {
   position: fixed;
@@ -223,6 +220,7 @@ select { cursor: pointer; }
 .nav-backdrop { display: none; }
 .sheet-handle { display: none; }
 .mobile-nav-header { display: none !important; }
+.mobile-nav-sheet { display: none; }
 .button.mobile-nav-cta,
 .mobile-nav-cta {
   display: none !important;
@@ -3033,11 +3031,6 @@ body.modal-open {
   .header-wrapper.header-scrolled {
     height: var(--header-height, 68px);
   }
-  .header-wrapper.header-scrolled.header-hidden {
-    transform: translateY(-100%);
-    box-shadow: none;
-    pointer-events: none;
-  }
 
   .nav-backdrop {
     display: block;
@@ -3058,11 +3051,12 @@ body.modal-open {
   }
 
   .nav { display: none; }
-  .nav.nav-open {
+  .mobile-nav-sheet {
     display: flex;
     position: fixed;
-    inset-block-end: 0;
-    inset-inline: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     width: 100%;
     z-index: 1000;
     background: var(--surface);
@@ -3077,7 +3071,7 @@ body.modal-open {
     animation: navSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     will-change: transform, opacity;
   }
-  .nav.nav-open.nav-closing {
+  .mobile-nav-sheet.sheet-closing {
     animation: navSlideDown 0.24s cubic-bezier(0.4, 0, 0.7, 0.2) forwards;
     pointer-events: none;
   }
@@ -3116,7 +3110,7 @@ body.modal-open {
     color: var(--ink);
   }
 
-  .nav.nav-open a {
+  .mobile-nav-sheet a {
     display: flex;
     align-items: center;
     padding: 13px 16px;
@@ -3127,8 +3121,8 @@ body.modal-open {
     transition: background 0.15s ease, color 0.15s ease;
   }
 
-  .nav.nav-open a:hover,
-  .nav.nav-open a:active {
+  .mobile-nav-sheet a:hover,
+  .mobile-nav-sheet a:active {
     background: var(--soft);
     color: var(--red);
   }
