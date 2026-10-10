@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, ArrowRight, MapPin, Search, Wifi, Utensils, BookOpen, Shirt, ShieldCheck, Sun, Moon, ChevronDown, ChevronLeft, X, Check, BedDouble, Layers, DoorOpen, HeartHandshake, Upload, CheckCircle2, LoaderCircle, Menu, Sparkles, Phone, Navigation, Car, Clock, Plus, RotateCcw, Eye, ExternalLink, Trash2 } from 'lucide-react';
+import { ArrowUpRight, ArrowRight, MapPin, Search, Wifi, Utensils, BookOpen, Shirt, ShieldCheck, Sun, Moon, ChevronDown, ChevronLeft, X, Check, BedDouble, Layers, DoorOpen, HeartHandshake, Upload, CheckCircle2, LoaderCircle, Menu, Sparkles, Phone, Navigation, Car, Clock, Plus, RotateCcw, Eye, ExternalLink, Trash2, Droplets, Bike, WashingMachine, BroomSparkles } from 'lucide-react';
 import { hostels, money, track, type Hostel } from '@/lib/data';
 
 type View = 'enquiry' | 'hostel' | 'admission' | null;
@@ -28,6 +28,60 @@ const amenityIcons: Record<string, React.ComponentType<{ size?: number; classNam
   'Study space': BookOpen,
   Laundry: Shirt,
 };
+
+function IronIcon({ size = 21, strokeWidth = 1.5, className = '' }: { size?: number; strokeWidth?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M3 18h14.5a3.5 3.5 0 0 0 3.5-3.5c0-2.8-2-4.5-5-4.5H6.5L3 18z" />
+      <path d="M7 10V6.5A2.5 2.5 0 0 1 9.5 4h5a2.5 2.5 0 0 1 2.5 2.5V8" />
+      <line x1="8.5" y1="14" x2="14.5" y2="14" />
+    </svg>
+  );
+}
+
+type Amenity = {
+  Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+  title: string;
+  sub?: string;
+  mobileSub?: string;
+};
+
+const allAmenities: Amenity[] = [
+  { Icon: Utensils, title: 'Homely Food', sub: 'Daily nutritious home-style meals', mobileSub: 'Homely daily meals' },
+  { Icon: Wifi, title: 'High-Speed Wi-Fi', sub: 'Reliable speed for study & streaming', mobileSub: 'Fast study & streaming' },
+  { Icon: Droplets, title: 'Purified Drinking Water', sub: 'Continuous multi-stage RO filtration', mobileSub: 'Clean RO drinking water' },
+  { Icon: BookOpen, title: 'Quiet Study Spaces', sub: 'Distraction-free focus environments', mobileSub: 'Quiet focus area' },
+  { Icon: Bike, title: 'Vehicle Parking', sub: 'Secure on-premise parking facility', mobileSub: 'Secure on-site parking' },
+  { Icon: WashingMachine, title: 'Washing Machine', sub: 'Fully automatic laundry equipment', mobileSub: 'Automatic laundry care' },
+  { Icon: IronIcon, title: 'Iron Box Station', sub: 'Dedicated pressing & garment care', mobileSub: 'Garment iron station' },
+  { Icon: BroomSparkles, title: 'Weekly Cleaning', sub: 'Regular deep sanitization & upkeep', mobileSub: 'Deep sanitization' },
+];
+
+const row1Amenities: Amenity[] = allAmenities;
+const row2Amenities: Amenity[] = [
+  ...allAmenities.slice(4),
+  ...allAmenities.slice(0, 4),
+];
+
+function AmenityCardItem({ Icon, title, sub, mobileSub }: Amenity) {
+  return (
+    <div className="amenity-card">
+      <div className="amenity-icon-box">
+        <Icon size={21} strokeWidth={1.5} />
+      </div>
+      <div className="amenity-info">
+        <strong>{title}</strong>
+        {sub && (
+          <>
+            <span className="amenity-sub-desktop">{sub}</span>
+            <span className="amenity-sub-mobile">{mobileSub || sub}</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 
 
 function Dialog({ children, onClose, title, small = false }: { children: React.ReactNode; onClose: () => void; title: string; small?: boolean }) {
@@ -158,40 +212,111 @@ function SortDropdown({ value, onChange }: { value: string; onChange: (val: stri
   return (
     <div className={`sort-wrap ${open ? 'sort-open' : ''}`} ref={ref}>
       <span className="sort-caption">Sort by</span>
-      <button
-        type="button"
-        className="sort-btn"
-        onClick={() => setOpen(prev => !prev)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label="Sort hostels"
-      >
-        <span>{currentLabel}</span>
-        <ChevronDown size={15} className={`sort-chevron ${open ? 'rotated' : ''}`} />
-      </button>
+      <div className="sort-btn-wrap">
+        <button
+          type="button"
+          className="sort-btn"
+          onClick={() => setOpen(prev => !prev)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-label="Sort hostels"
+        >
+          <span>{currentLabel}</span>
+          <ChevronDown size={15} className={`sort-chevron ${open ? 'rotated' : ''}`} />
+        </button>
 
-      {open && (
-        <ul className="sort-menu" role="listbox" aria-label="Sort options">
-          {sortOptions.map((opt) => {
-            const isSelected = opt.value === value;
-            return (
-              <li
-                key={opt.value}
-                role="option"
-                aria-selected={isSelected}
-                className={`sort-item ${isSelected ? 'selected' : ''}`}
-                onClick={() => {
-                  onChange(opt.value);
-                  setOpen(false);
-                }}
-              >
-                <span>{opt.label}</span>
-                {isSelected && <Check size={15} className="item-check" />}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+        {open && (
+          <ul className="sort-menu" role="listbox" aria-label="Sort options">
+            {sortOptions.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <li
+                  key={opt.value}
+                  role="option"
+                  aria-selected={isSelected}
+                  className={`sort-item ${isSelected ? 'selected' : ''}`}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                >
+                  <span>{opt.label}</span>
+                  {isSelected && <Check size={15} className="item-check" />}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FilterDropdown({ value, onChange }: { value: string; onChange: (val: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const filterOptions = [
+    { value: 'Everyone', label: 'All hostels' },
+    { value: 'Girls', label: 'Girls hostels' },
+    { value: 'Boys', label: 'Boys hostels' },
+  ];
+  const currentLabel = filterOptions.find(o => o.value === value)?.label || 'All hostels';
+
+  useEffect(() => {
+    if (!open) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div className={`sort-wrap filter-dropdown-wrap ${open ? 'sort-open' : ''}`} ref={ref}>
+      <span className="sort-caption">Filter</span>
+      <div className="sort-btn-wrap">
+        <button
+          type="button"
+          className="sort-btn"
+          onClick={() => setOpen(prev => !prev)}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-label="Filter hostels by gender"
+        >
+          <span>{currentLabel}</span>
+          <ChevronDown size={15} className={`sort-chevron ${open ? 'rotated' : ''}`} />
+        </button>
+
+        {open && (
+          <ul className="sort-menu" role="listbox" aria-label="Filter options">
+            {filterOptions.map((opt) => {
+              const isSelected = opt.value === value;
+              return (
+                <li
+                  key={opt.value}
+                  role="option"
+                  aria-selected={isSelected}
+                  className={`sort-item ${isSelected ? 'selected' : ''}`}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setOpen(false);
+                  }}
+                >
+                  <span>{opt.label}</span>
+                  {isSelected && <Check size={15} className="item-check" />}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
@@ -214,6 +339,8 @@ export default function Keto() {
   const [toast, setToast] = useState('');
   const [faq, setFaq] = useState<number | null>(0);
   const [scrolled, setScrolled] = useState(false);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
   const updateDirty = useCallback((value: boolean) => { dirtyRef.current = value; setDirty(value); }, []);
   const applyRoute = useCallback((next: Route, replace = false) => {
     const url = new URL(window.location.href);
@@ -224,11 +351,41 @@ export default function Keto() {
     setRoute(next);
   }, []);
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 30);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+    let ticking = false;
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(currentScrollY > 20);
+
+          if (menu) {
+            setHeaderVisible(true);
+            lastScrollY.current = Math.max(0, currentScrollY);
+            ticking = false;
+            return;
+          }
+
+          if (currentScrollY <= 40) {
+            setHeaderVisible(true);
+          } else {
+            const delta = currentScrollY - lastScrollY.current;
+            if (delta > 6) {
+              setHeaderVisible(false);
+            } else if (delta < -6) {
+              setHeaderVisible(true);
+            }
+          }
+
+          lastScrollY.current = Math.max(0, currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [menu]);
   useEffect(() => {
     const initial = readRoute(); setRoute(initial); routeRef.current = initial;
     const savedTheme = localStorage.getItem('keto-theme');
@@ -310,95 +467,143 @@ export default function Keto() {
   const isMenuVisible = menu || menuClosing;
 
   return <>
-    <div className="announcement"><span className="announcement-dot" /> A new city. A familiar feeling. <span className="announcement-extra">Find your place with Keto.</span></div>
-    <header className={`header-wrapper ${scrolled ? 'header-scrolled' : ''}`}>
-      <div className="site-header shell">
-        <a href="/" aria-label="Keto home" className="brand"><span className="brand-logo-wrap"><Image className="logo-light" src="/logo.webp" width={133} height={54} alt="Keto" priority unoptimized /><Image className="logo-dark" src="/logowhite.webp" width={133} height={54} alt="Keto" priority unoptimized /></span><span className="brand-tag">student living</span></a>
-        {isMenuVisible && (
-          <div
-            className={`nav-backdrop ${menuClosing ? 'nav-backdrop-closing' : ''}`}
-            onClick={() => closeMenu()}
-            aria-hidden="true"
-          />
-        )}
-        <nav
-          className={
-            isMenuVisible
-              ? `nav nav-open ${menuClosing ? 'nav-closing' : ''}`
-              : 'nav'
-          }
-          aria-label="Main navigation"
-        >
-          <div className="sheet-handle" aria-hidden="true" />
-          <a href="#home" onClick={() => closeMenu()}>Keto Home</a>
-          <a href="#hostels" onClick={() => closeMenu()}>Our hostels</a>
-          <a href="#how-it-works" onClick={() => closeMenu()}>How it works</a>
-          <button className="button primary mobile-nav-cta" onClick={() => closeMenu(() => open('enquiry'))}>
-            Find my space <ArrowUpRight size={17} />
-          </button>
-        </nav>
-        <div className="header-actions">
-          <button className="icon-button theme-toggle" aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'} onClick={toggleTheme}>
-            <span className="theme-icon-wrap"><Sun className="theme-icon sun-icon" size={18} /><Moon className="theme-icon moon-icon" size={18} /></span>
-          </button>
-          <button className="button primary header-cta" onClick={() => open('enquiry')}>Find my space <ArrowUpRight size={17} /></button>
-          <button className="icon-button mobile-menu" aria-label="Toggle navigation" aria-expanded={menu} onClick={toggleMenu}>
-            {menu && !menuClosing ? <X size={22} /> : <Menu size={22} />}
-          </button>
-        </div>
+    <div className="hero-screen-wrapper">
+      <div className="announcement"><span className="announcement-dot" /> A new city. A familiar feeling. <span className="announcement-extra">Find your place with Keto.</span></div>
+      <div className="header-slot">
+        <header className={`header-wrapper ${scrolled ? 'header-scrolled' : ''} ${!headerVisible && scrolled ? 'header-hidden' : ''}`}>
+          <div className="site-header shell">
+            <a href="/" aria-label="Keto home" className="brand"><span className="brand-logo-wrap"><Image className="logo-light" src="/logo.webp" width={133} height={54} alt="Keto" priority unoptimized /><Image className="logo-dark" src="/logowhite.webp" width={133} height={54} alt="Keto" priority unoptimized /></span><span className="brand-tag">student living</span></a>
+            {isMenuVisible && (
+              <div
+                className={`nav-backdrop ${menuClosing ? 'nav-backdrop-closing' : ''}`}
+                onClick={() => closeMenu()}
+                aria-hidden="true"
+              />
+            )}
+            <nav
+              className={
+                isMenuVisible
+                  ? `nav nav-open ${menuClosing ? 'nav-closing' : ''}`
+                  : 'nav'
+              }
+              aria-label="Main navigation"
+            >
+              <div className="sheet-handle" aria-hidden="true" />
+              <div className="mobile-nav-header">
+                <a href="/" aria-label="Keto home" className="brand" onClick={() => closeMenu()}>
+                  <span className="brand-logo-wrap">
+                    <Image className="logo-light" src="/logo.webp" width={110} height={45} alt="Keto" priority unoptimized />
+                    <Image className="logo-dark" src="/logowhite.webp" width={110} height={45} alt="Keto" priority unoptimized />
+                  </span>
+                  <span className="brand-tag">student living</span>
+                </a>
+                <div className="mobile-nav-actions">
+                  <button className="icon-button theme-toggle" aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'} onClick={toggleTheme}>
+                    <span className="theme-icon-wrap"><Sun className="theme-icon sun-icon" size={18} /><Moon className="theme-icon moon-icon" size={18} /></span>
+                  </button>
+                  <button className="icon-button mobile-nav-close" aria-label="Close navigation" onClick={() => closeMenu()}>
+                    <X size={22} />
+                  </button>
+                </div>
+              </div>
+              <a href="#home" onClick={() => closeMenu()}>Keto Home</a>
+              <a href="#hostels" onClick={() => closeMenu()}>Our hostels</a>
+              <a href="#how-it-works" onClick={() => closeMenu()}>How it works</a>
+              <button className="button primary mobile-nav-cta" onClick={() => closeMenu(() => open('enquiry'))}>
+                Find my space <ArrowUpRight size={17} />
+              </button>
+            </nav>
+            <div className="header-actions">
+              <button className="icon-button theme-toggle" aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'} onClick={toggleTheme}>
+                <span className="theme-icon-wrap"><Sun className="theme-icon sun-icon" size={18} /><Moon className="theme-icon moon-icon" size={18} /></span>
+              </button>
+              <button className="button primary header-cta" onClick={() => open('enquiry')}>Find my space <ArrowUpRight size={17} /></button>
+              <button className="icon-button mobile-menu" aria-label="Toggle navigation" aria-expanded={menu} onClick={toggleMenu}>
+                {menu && !menuClosing ? <X size={22} /> : <Menu size={22} />}
+              </button>
+            </div>
+          </div>
+        </header>
       </div>
-    </header>
 
-    <main>
       <section id="home" className="hero shell">
         <div className="hero-copy"><div className="eyebrow"><span className="tiny-line" /> MORE THAN A PLACE TO STAY</div><h1>A little closer<br />to <span className="serif-word">home.</span><span className="hero-asterisk">✳</span></h1><p>Student living that feels right, from day one.</p><div className="hero-actions"><a href="#hostels" className="button primary">Explore our hostels <ArrowUpRight size={18} /></a><a href="#how-it-works" className="button secondary">How it works <ArrowRight size={17} /></a></div><div className="hero-note"><span>Explore online. Visit in person. Feel at home.</span></div></div>
         <div className="hero-art"><Image className="hero-photo" src="/hero.webp" alt="Bright shared bedroom with natural light and comfortable beds" fill priority sizes="(max-width: 800px) 100vw, 52vw" /><div className="photo-shade" /><span className="photo-caption">SPACE TO MAKE YOUR OWN</span><div className="hero-sticker"><span>GOOD DAYS<br />START HERE</span><Sun size={31} strokeWidth={1.4} /></div></div>
       </section>
+    </div>
 
-      <section className="finder shell" aria-label="Find a hostel">
-        <div className="finder-intro"><span className="eyebrow">LET’S FIND YOUR PLACE</span><strong>Where will life take you?</strong></div>
-        <FinderSelect
-          label="LOCATION"
-          value={area}
-          options={['All locations', ...Array.from(new Set(hostels.map(h => h.area)))]}
-          onChange={setArea}
-          icon={MapPin}
-          ariaLabel="Filter hostels by location"
-        />
-        <FinderSelect
-          label="LOOKING FOR"
-          value={audience}
-          options={['Everyone', 'Girls', 'Boys']}
-          onChange={setAudience}
-          icon={BedDouble}
-          ariaLabel="Filter hostels by student type"
-        />
-        <button className="button primary" onClick={() => { setFilter({area,audience}); document.getElementById('hostels')?.scrollIntoView({behavior:'smooth'}); }}>
-          <Search size={18} /> Find a hostel
-        </button>
-      </section>
-
-      <section id="living" className="benefits shell" aria-label="Life at Keto"><span className="benefits-label">Less to worry about.<br /><strong>More room to be you.</strong></span>{[{Icon:Wifi,title:'Stay connected',sub:'Wi-Fi for work & play'},{Icon:Utensils,title:'Feel looked after',sub:'Everyday meal options'},{Icon:BookOpen,title:'Find your focus',sub:'Space for your big plans'},{Icon:ShieldCheck,title:'Someone to turn to',sub:'Your on-site warden'}].map(({Icon,title,sub}) => <div className="benefit" key={title}><Icon size={25} strokeWidth={1.5} /><div><strong>{title}</strong><span>{sub}</span></div></div>)}</section>
-
-      <section id="hostels" className="hostels-section shell">
+    <main>
+      <section id="living" className="amenities-section shell" aria-label="Life at Keto">
         <div className="section-heading">
           <div>
             <span className="eyebrow">FIND YOUR EVERYDAY HAPPY</span>
             <h2>Different places. <span className="serif-word">Same feeling.</span></h2>
           </div>
         </div>
-        <div className="listing-tools">
-          <div className="filter-chips">
-            {['Everyone','Girls','Boys'].map(item => (
-              <button
-                key={item}
-                className={`chip ${filter.audience === item ? 'active' : ''}`}
-                onClick={() => { setFilter({...filter,audience:item}); setAudience(item); }}
-              >
-                {item === 'Everyone' ? 'All hostels' : `${item} hostels`}
-              </button>
-            ))}
+        <div className="amenities-marquee-wrapper" aria-label="Amenities showcase">
+          <div className="marquee-track marquee-track-right">
+            <div className="marquee-half">
+              {row1Amenities.map((amenity, idx) => (
+                <AmenityCardItem key={`r1-a-${idx}`} {...amenity} />
+              ))}
+            </div>
+            <div className="marquee-half" aria-hidden="true">
+              {row1Amenities.map((amenity, idx) => (
+                <AmenityCardItem key={`r1-b-${idx}`} {...amenity} />
+              ))}
+            </div>
           </div>
+
+          <div className="marquee-track marquee-track-left">
+            <div className="marquee-half">
+              {row2Amenities.map((amenity, idx) => (
+                <AmenityCardItem key={`r2-a-${idx}`} {...amenity} />
+              ))}
+            </div>
+            <div className="marquee-half" aria-hidden="true">
+              {row2Amenities.map((amenity, idx) => (
+                <AmenityCardItem key={`r2-b-${idx}`} {...amenity} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div id="finder" className="finder" role="region" aria-label="Find a hostel">
+          <div className="finder-intro"><span className="eyebrow">LET’S FIND YOUR PLACE</span><strong>Where will life take you?</strong></div>
+          <FinderSelect
+            label="LOCATION"
+            value={area}
+            options={['All locations', ...Array.from(new Set(hostels.map(h => h.area)))]}
+            onChange={setArea}
+            icon={MapPin}
+            ariaLabel="Filter hostels by location"
+          />
+          <FinderSelect
+            label="LOOKING FOR"
+            value={audience}
+            options={['Everyone', 'Girls', 'Boys']}
+            onChange={setAudience}
+            icon={BedDouble}
+            ariaLabel="Filter hostels by student type"
+          />
+          <button className="button primary" onClick={() => { setFilter({area,audience}); document.getElementById('hostels')?.scrollIntoView({behavior:'smooth'}); }}>
+            <Search size={18} /> Find a hostel
+          </button>
+        </div>
+      </section>
+
+      <section id="hostels" className="hostels-section shell">
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">OUR HOSTELS</span>
+            <h2>Spaces designed <span className="serif-word">for living.</span></h2>
+          </div>
+        </div>
+        <div className="listing-tools">
+          <FilterDropdown
+            value={filter.audience}
+            onChange={(val) => { setFilter({...filter, audience: val}); setAudience(val); }}
+          />
           <SortDropdown value={sort} onChange={setSort} />
         </div>
         <p className="sample-notice"><span /> Explore active residences and upcoming student living locations</p>

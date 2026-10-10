@@ -13,5 +13,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><head><link rel="preload" href="/fonts/font-0.ttf" as="font" type="font/ttf" crossOrigin="anonymous" /><link rel="preload" href="/fonts/font-5.ttf" as="font" type="font/ttf" crossOrigin="anonymous" /></head><body>{children}</body></html>;
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preload" href="/fonts/font-0.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
+        <link rel="preload" href="/fonts/font-5.ttf" as="font" type="font/ttf" crossOrigin="anonymous" />
+      </head>
+      <body suppressHydrationWarning>{children}</body>
+    </html>
+  );
 }
