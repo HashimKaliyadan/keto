@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, ArrowRight, MapPin, Search, Wifi, Utensils, BookOpen, Shirt, ShieldCheck, Sun, Moon, ChevronDown, ChevronLeft, X, Check, BedDouble, Layers, DoorOpen, HeartHandshake, Upload, CheckCircle2, LoaderCircle, Menu, Sparkles, Phone, Navigation, Car, Clock, Plus, RotateCcw, Eye, ExternalLink, Trash2, Droplets, Bike, WashingMachine, BroomSparkles } from 'lucide-react';
+import { ArrowUpRight, ArrowRight, MapPin, Search, Wifi, Utensils, BookOpen, Shirt, ShieldCheck, Sun, Moon, ChevronDown, ChevronLeft, ChevronRight, Calendar, X, Check, BedDouble, Layers, DoorOpen, HeartHandshake, Upload, CheckCircle2, LoaderCircle, Menu, Sparkles, Phone, Navigation, Car, Clock, Plus, RotateCcw, Eye, ExternalLink, Trash2, Droplets, Bike, WashingMachine, BroomSparkles } from 'lucide-react';
 import { hostels, money, track, type Hostel } from '@/lib/data';
 
 type View = 'enquiry' | 'hostel' | 'admission' | null;
@@ -947,8 +947,10 @@ function HostelDetail({hostel,route,navigate,enquire}:{hostel:Hostel;route:Route
   const currentPlan = hostel.sharingOptions?.find(o => o.sharing === selectedSharing);
   const currentPrice = currentPlan ? currentPlan.price : (hostel.price || 6500);
 
-  const bunksCount = Math.max(1, Math.ceil(selectedSharing / 2));
+  const isTwoSharing = selectedSharing === 2;
+  const bunksCount = isTwoSharing ? 2 : Math.max(1, Math.ceil(selectedSharing / 2));
   const bunkLetters = ['A', 'B', 'C', 'D'].slice(0, bunksCount);
+  const bedLevels = isTwoSharing ? ['Lower'] : ['Upper', 'Lower'];
 
   return (
     <div className="hostel-detail">
@@ -961,26 +963,57 @@ function HostelDetail({hostel,route,navigate,enquire}:{hostel:Hostel;route:Route
           <span className="location">
             <MapPin size={14}/> <strong>{hostel.area}</strong>{hostel.subArea ? ` (${hostel.subArea})` : ''}
           </span>
-          {hostel.mapUrl && (
-            <a href={hostel.mapUrl} target="_blank" rel="noopener noreferrer" className="detail-map-link">
-              <Navigation size={13}/> View on Google Maps <ArrowUpRight size={13}/>
-            </a>
-          )}
         </div>
         <h2>{hostel.name}</h2>
 
         <p>Your second home in Calicut. Clean rooms, homely food, study areas, Wi-Fi, and complete peace of mind.</p>
 
-        {/* Warden Contact Call Card */}
-        {hostel.phone && (
-          <div className="detail-contact-card">
-            <div className="contact-text">
-              <span className="contact-badge">{hostel.contactRole === 'Warden' ? 'Hostel Warden' : 'Branch Contact'}</span>
-              <span className="contact-number">{hostel.phoneDisplay}</span>
-            </div>
-            <a href={`tel:${hostel.phone}`} className="button primary call-button">
-              <Phone size={15}/> Call
-            </a>
+        {/* Dual Action Cards: Warden/Branch Contact & Real Map (Square feel) */}
+        {(hostel.phone || hostel.mapUrl) && (
+          <div className="detail-action-grid">
+            {hostel.phone && (
+              <div className="detail-action-card contact-action-card">
+                <div className="action-card-top">
+                  <span className="contact-role-pill">{hostel.contactRole === 'Warden' ? 'Hostel Warden' : 'Branch Contact'}</span>
+                  <span className="contact-status-dot"><span className="pulse-dot" /> Direct Line</span>
+                </div>
+                <div className="contact-phone-wrap">
+                  <span className="contact-phone-number">{hostel.phoneDisplay}</span>
+                  <span className="contact-phone-sub">Call directly for room visits & bed availability</span>
+                </div>
+                <a href={`tel:${hostel.phone}`} className="action-card-bottom-btn contact-action-btn">
+                  <Phone size={13}/> Contact
+                </a>
+              </div>
+            )}
+
+            {hostel.mapUrl && (
+              <div className="detail-action-card map-action-card">
+                <iframe
+                  title={`Map location of ${hostel.name} in ${hostel.area}, Calicut`}
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(`${hostel.name} ${hostel.area} Calicut`)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                  className="hostel-map-iframe"
+                  loading="lazy"
+                  tabIndex={-1}
+                  aria-hidden="true"
+                />
+                <div className="map-card-overlay">
+                  <div className="action-card-top">
+                    <span className="map-pill">
+                      <MapPin size={11} className="map-pill-pin" /> {hostel.area}, Calicut
+                    </span>
+                  </div>
+                  <a
+                    href={hostel.mapUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="action-card-bottom-btn map-open-btn"
+                  >
+                    <Navigation size={13}/> Open Google Maps <ArrowUpRight size={13}/>
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1011,7 +1044,6 @@ function HostelDetail({hostel,route,navigate,enquire}:{hostel:Hostel;route:Route
           <div className="detail-plans-box">
             <div className="plans-header">
               <h4>SELECT ROOM SHARING</h4>
-              <span className="maint-charge">Select an option to view beds</span>
             </div>
             <div className="plans-grid" role="radiogroup" aria-label="Select sharing option">
               {hostel.sharingOptions.map(opt => {
@@ -1025,16 +1057,16 @@ function HostelDetail({hostel,route,navigate,enquire}:{hostel:Hostel;route:Route
                     role="radio"
                     aria-checked={isSelected}
                   >
-                    <div className="plan-item-top">
+                    <div className="plan-item-left">
                       <div className="plan-title-wrap">
                         <BedDouble size={16} className="plan-icon" />
                         <span className="plan-sharing-title">{opt.sharing} Sharing</span>
                       </div>
-                      <span className={`plan-choice-badge ${isSelected ? 'selected' : ''}`}>
-                        {isSelected ? <><Check size={11} strokeWidth={3} /> Selected</> : 'Select'}
-                      </span>
+                      <span className="plan-sub">{opt.sharing} beds room layout</span>
                     </div>
-                    <span className="plan-sub">{opt.sharing} beds room layout</span>
+                    <span className={`plan-choice-circle ${isSelected ? 'selected' : ''}`} aria-hidden="true">
+                      {isSelected && <Check size={12} strokeWidth={3.2} />}
+                    </span>
                   </button>
                 );
               })}
@@ -1078,14 +1110,16 @@ function HostelDetail({hostel,route,navigate,enquire}:{hostel:Hostel;route:Route
             <div className={`bunk-grid bunks-${bunkLetters.length}`}>
               {bunkLetters.map((b, idx) => (
                 <div className="bunk" key={b}>
-                  <span>BUNK {b}</span>
-                  {['Upper', 'Lower'].map((level, j) => {
-                    const occupied = (route.room + idx * 2 + j) % 3 === 0;
+                  <span>{isTwoSharing ? `BED ${b}` : `BUNK ${b}`}</span>
+                  {bedLevels.map((level, j) => {
+                    const occupied = isTwoSharing
+                      ? (route.room + idx) % 2 === 0
+                      : (route.room + idx * 2 + j) % 3 === 0;
                     return (
                       <div className={`bed ${occupied ? 'occupied' : 'available'}`} key={level}>
                         <BedDouble size={22} />
                         <div>
-                          <strong>{b}{j + 1} · {level}</strong>
+                          <strong>{isTwoSharing ? `${b} · Lower` : `${b}${j + 1} · ${level}`}</strong>
                           <span>{occupied ? 'Occupied' : 'Available'}</span>
                         </div>
                         {!occupied && <Check size={14} strokeWidth={2.8} />}
@@ -1140,6 +1174,505 @@ const emptyFields = {
   address: '',
 };
 type Fields = typeof emptyFields;
+
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+function formatAdmissionDate(val?: string): string {
+  if (!val) return '';
+  const parts = val.split('-');
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d) && m >= 0 && m < 12) {
+      const shortMonth = MONTH_NAMES[m].slice(0, 3);
+      return `${String(d).padStart(2, '0')} ${shortMonth} ${y}`;
+    }
+  }
+  return val;
+}
+
+const FULL_WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const SHORT_WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+function getFullDateAriaLabel(year: number, month: number, day: number): string {
+  const d = new Date(year, month, day);
+  const weekday = FULL_WEEKDAYS[d.getDay()] || '';
+  const monthName = MONTH_NAMES[month] || '';
+  return `${weekday}, ${day} ${monthName} ${year}`;
+}
+
+function CustomDatePicker({
+  value,
+  onChange,
+  onBlur,
+  error,
+  label = 'Date of admission',
+  required = true,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  onBlur?: () => void;
+  error?: string;
+  label?: string;
+  required?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [flipAbove, setFlipAbove] = useState(false);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayYear = today.getFullYear();
+  const todayMonth = today.getMonth();
+  const todayDay = today.getDate();
+  const todayIso = `${todayYear}-${String(todayMonth + 1).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
+
+  const parts = value ? value.split('-') : [];
+  const initialYear = parts.length === 3 && !isNaN(parseInt(parts[0], 10)) ? parseInt(parts[0], 10) : todayYear;
+  const initialMonth = parts.length === 3 && !isNaN(parseInt(parts[1], 10)) ? parseInt(parts[1], 10) - 1 : todayMonth;
+  const initialDay = parts.length === 3 && !isNaN(parseInt(parts[2], 10)) ? parseInt(parts[2], 10) : todayDay;
+
+  const [viewYear, setViewYear] = useState(initialYear);
+  const [viewMonth, setViewMonth] = useState(initialMonth);
+  const [focusedDay, setFocusedDay] = useState(initialDay);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dayButtonRefs = useRef<Record<number, HTMLButtonElement | null>>({});
+
+  const [monthDropdownOpen, setMonthDropdownOpen] = useState(false);
+  const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
+  const monthDropdownRef = useRef<HTMLDivElement>(null);
+  const yearDropdownRef = useRef<HTMLDivElement>(null);
+  const selectedMonthRef = useRef<HTMLButtonElement>(null);
+  const selectedYearRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-scroll selected item into view in custom dropdowns
+  useEffect(() => {
+    if (monthDropdownOpen && selectedMonthRef.current) {
+      selectedMonthRef.current.scrollIntoView({ block: 'nearest' });
+    }
+  }, [monthDropdownOpen]);
+
+  useEffect(() => {
+    if (yearDropdownOpen && selectedYearRef.current) {
+      selectedYearRef.current.scrollIntoView({ block: 'nearest' });
+    }
+  }, [yearDropdownOpen]);
+
+  // Sync view when value changes or when opening
+  useEffect(() => {
+    if (value) {
+      const p = value.split('-');
+      if (p.length === 3) {
+        const y = parseInt(p[0], 10);
+        const m = parseInt(p[1], 10) - 1;
+        const d = parseInt(p[2], 10);
+        if (!isNaN(y) && !isNaN(m) && m >= 0 && m < 12) {
+          setViewYear(y);
+          setViewMonth(m);
+          setFocusedDay(d);
+        }
+      }
+    } else {
+      setFocusedDay(todayDay);
+    }
+  }, [value, open, todayDay]);
+
+  // Positioning flip check when opening
+  useEffect(() => {
+    if (open && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      if (spaceBelow < 260 && rect.top > 260) {
+        setFlipAbove(true);
+      } else {
+        setFlipAbove(false);
+      }
+    }
+  }, [open]);
+
+  // Focus the active day when open and focusedDay changes
+  useEffect(() => {
+    if (open && dayButtonRefs.current[focusedDay]) {
+      dayButtonRefs.current[focusedDay]?.focus();
+    }
+  }, [open, focusedDay, viewMonth, viewYear]);
+
+  // Intercept Escape key in CAPTURE phase so parent dialog does NOT close
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node;
+      if (monthDropdownRef.current && !monthDropdownRef.current.contains(target)) {
+        setMonthDropdownOpen(false);
+      }
+      if (yearDropdownRef.current && !yearDropdownRef.current.contains(target)) {
+        setYearDropdownOpen(false);
+      }
+      if (containerRef.current && !containerRef.current.contains(target)) {
+        setOpen(false);
+        setMonthDropdownOpen(false);
+        setYearDropdownOpen(false);
+        onBlur?.();
+      }
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        if (monthDropdownOpen || yearDropdownOpen) {
+          setMonthDropdownOpen(false);
+          setYearDropdownOpen(false);
+        } else {
+          setOpen(false);
+          onBlur?.();
+          triggerRef.current?.focus();
+        }
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [open, onBlur, monthDropdownOpen, yearDropdownOpen]);
+
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+  const prevMonth = () => {
+    setMonthDropdownOpen(false);
+    setYearDropdownOpen(false);
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear(y => y - 1);
+    } else {
+      setViewMonth(m => m - 1);
+    }
+  };
+
+  const nextMonth = () => {
+    setMonthDropdownOpen(false);
+    setYearDropdownOpen(false);
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear(y => y + 1);
+    } else {
+      setViewMonth(m => m + 1);
+    }
+  };
+
+  const selectDate = (year: number, month: number, day: number) => {
+    setMonthDropdownOpen(false);
+    setYearDropdownOpen(false);
+    const mm = String(month + 1).padStart(2, '0');
+    const dd = String(day).padStart(2, '0');
+    onChange(`${year}-${mm}-${dd}`);
+    setOpen(false);
+    onBlur?.();
+    triggerRef.current?.focus();
+  };
+
+  // Keyboard grid navigation for W3C APG compliance
+  const handleGridKeyDown = (e: React.KeyboardEvent) => {
+    let handled = true;
+    if (e.key === 'ArrowRight') {
+      if (focusedDay < daysInMonth) {
+        setFocusedDay(d => d + 1);
+      } else {
+        nextMonth();
+        setFocusedDay(1);
+      }
+    } else if (e.key === 'ArrowLeft') {
+      if (focusedDay > 1) {
+        setFocusedDay(d => d - 1);
+      } else {
+        prevMonth();
+        const prevDays = new Date(viewMonth === 0 ? viewYear - 1 : viewYear, viewMonth === 0 ? 12 : viewMonth, 0).getDate();
+        setFocusedDay(prevDays);
+      }
+    } else if (e.key === 'ArrowDown') {
+      if (focusedDay + 7 <= daysInMonth) {
+        setFocusedDay(d => d + 7);
+      } else {
+        nextMonth();
+        setFocusedDay(d => d + 7 - daysInMonth);
+      }
+    } else if (e.key === 'ArrowUp') {
+      if (focusedDay - 7 >= 1) {
+        setFocusedDay(d => d - 7);
+      } else {
+        prevMonth();
+        const prevDays = new Date(viewMonth === 0 ? viewYear - 1 : viewYear, viewMonth === 0 ? 12 : viewMonth, 0).getDate();
+        setFocusedDay(prevDays + (focusedDay - 7));
+      }
+    } else if (e.key === 'Home') {
+      setFocusedDay(1);
+    } else if (e.key === 'End') {
+      setFocusedDay(daysInMonth);
+    } else if (e.key === 'PageDown') {
+      nextMonth();
+    } else if (e.key === 'PageUp') {
+      prevMonth();
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      selectDate(viewYear, viewMonth, focusedDay);
+    } else {
+      handled = false;
+    }
+
+    if (handled) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const yearOptions: number[] = [];
+  for (let y = todayYear - 10; y <= todayYear + 10; y++) {
+    yearOptions.push(y);
+  }
+
+  type DayCell = {
+    day?: number;
+    iso?: string;
+  };
+
+  const cells: DayCell[] = [];
+  for (let i = 0; i < firstDayOfWeek; i++) {
+    cells.push({});
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const iso = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    cells.push({ day: d, iso });
+  }
+  const remainder = cells.length % 7;
+  if (remainder !== 0) {
+    const fill = 7 - remainder;
+    for (let i = 0; i < fill; i++) {
+      cells.push({});
+    }
+  }
+
+  const rows: DayCell[][] = [];
+  for (let r = 0; r < cells.length; r += 7) {
+    rows.push(cells.slice(r, r + 7));
+  }
+
+  return (
+    <div className="custom-date-container" ref={containerRef}>
+      <label htmlFor="admission-date-btn" id="admission-date-label" className="custom-date-label">
+        {label} {required && <span className="required" aria-hidden="true">*</span>}
+      </label>
+      <div className="custom-date-field-wrap">
+        <button
+          ref={triggerRef}
+          type="button"
+          id="admission-date-btn"
+          className={`custom-date-btn ${open ? 'is-open' : ''} ${error ? 'has-error' : ''}`}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-required={required}
+          aria-invalid={!!error}
+          aria-labelledby="admission-date-label admission-date-btn"
+          aria-describedby={error ? 'admissionDate-error' : undefined}
+          onClick={() => setOpen(!open)}
+        >
+          <span className="custom-date-left">
+            <Calendar size={17} className="custom-date-icon" />
+            <span className={value ? 'custom-date-val' : 'custom-date-placeholder'}>
+              {value ? formatAdmissionDate(value) : 'Select date of admission'}
+            </span>
+          </span>
+          <ChevronDown size={16} className={`custom-date-arrow ${open ? 'rotated' : ''}`} />
+        </button>
+
+        {open && (
+          <div
+            className={`custom-date-dropdown ${flipAbove ? 'is-flip-above' : ''}`}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Calendar date picker"
+          >
+            {/* Live announcement region for screen readers */}
+            <div className="sr-only" aria-live="polite" aria-atomic="true">
+              {MONTH_NAMES[viewMonth]} {viewYear}
+            </div>
+
+            {/* Header Controls */}
+            <div className="custom-date-header">
+              <button
+                type="button"
+                className="custom-date-nav-btn"
+                onClick={prevMonth}
+                title="Previous month"
+                aria-label="Previous month"
+              >
+                <ChevronLeft size={15} />
+              </button>
+
+              <div className="custom-date-header-center">
+                {/* Month Custom Dropdown */}
+                <div className="custom-date-menu-wrap" ref={monthDropdownRef}>
+                  <button
+                    type="button"
+                    className={`custom-date-pill-btn ${monthDropdownOpen ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setMonthDropdownOpen(prev => !prev);
+                      setYearDropdownOpen(false);
+                    }}
+                    aria-expanded={monthDropdownOpen}
+                    aria-label="Select month"
+                  >
+                    <span className="custom-date-pill-label">{MONTH_NAMES[viewMonth]}</span>
+                    <ChevronDown size={13} className={`custom-date-pill-icon ${monthDropdownOpen ? 'rotated' : ''}`} />
+                  </button>
+
+                  {monthDropdownOpen && (
+                    <div className="custom-date-dropdown-menu" role="listbox" aria-label="Months">
+                      {MONTH_NAMES.map((m, idx) => {
+                        const isSelected = idx === viewMonth;
+                        return (
+                          <button
+                            key={m}
+                            ref={isSelected ? selectedMonthRef : undefined}
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            className={`custom-date-menu-item ${isSelected ? 'is-selected' : ''}`}
+                            onClick={() => {
+                              setViewMonth(idx);
+                              setMonthDropdownOpen(false);
+                            }}
+                          >
+                            {m}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Year Custom Dropdown */}
+                <div className="custom-date-menu-wrap" ref={yearDropdownRef}>
+                  <button
+                    type="button"
+                    className={`custom-date-pill-btn ${yearDropdownOpen ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setYearDropdownOpen(prev => !prev);
+                      setMonthDropdownOpen(false);
+                    }}
+                    aria-expanded={yearDropdownOpen}
+                    aria-label="Select year"
+                  >
+                    <span className="custom-date-pill-label">{viewYear}</span>
+                    <ChevronDown size={13} className={`custom-date-pill-icon ${yearDropdownOpen ? 'rotated' : ''}`} />
+                  </button>
+
+                  {yearDropdownOpen && (
+                    <div className="custom-date-dropdown-menu" role="listbox" aria-label="Years">
+                      {yearOptions.map(y => {
+                        const isSelected = y === viewYear;
+                        return (
+                          <button
+                            key={y}
+                            ref={isSelected ? selectedYearRef : undefined}
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            className={`custom-date-menu-item ${isSelected ? 'is-selected' : ''}`}
+                            onClick={() => {
+                              setViewYear(y);
+                              setYearDropdownOpen(false);
+                            }}
+                          >
+                            {y}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="custom-date-nav-btn"
+                onClick={nextMonth}
+                title="Next month"
+                aria-label="Next month"
+              >
+                <ChevronRight size={15} />
+              </button>
+            </div>
+
+            {/* Weekday Row */}
+            <div className="custom-date-weekdays" role="row">
+              {SHORT_WEEKDAYS.map((w, idx) => (
+                <span key={w} className="custom-date-weekday" role="columnheader" aria-label={FULL_WEEKDAYS[idx]}>
+                  {w}
+                </span>
+              ))}
+            </div>
+
+            {/* Calendar Grid compliant with W3C APG */}
+            <div
+              className="custom-date-grid"
+              role="grid"
+              aria-label={`${MONTH_NAMES[viewMonth]} ${viewYear}`}
+              onKeyDown={handleGridKeyDown}
+            >
+              {rows.map((row, rIdx) => (
+                <div key={rIdx} className="custom-date-row" role="row">
+                  {row.map((slot, cIdx) => {
+                    if (!slot.day) {
+                      return (
+                        <div key={`empty-${rIdx}-${cIdx}`} role="gridcell" className="custom-date-cell is-empty">
+                          <span className="custom-date-day is-empty" aria-hidden="true" />
+                        </div>
+                      );
+                    }
+
+                    const isSelected = value === slot.iso;
+                    const isToday = slot.iso === todayIso;
+                    const isFocused = focusedDay === slot.day;
+
+                    return (
+                      <div key={`day-${slot.day}`} role="gridcell" className="custom-date-cell">
+                        <button
+                          ref={el => { dayButtonRefs.current[slot.day!] = el; }}
+                          type="button"
+                          tabIndex={isFocused ? 0 : -1}
+                          aria-label={getFullDateAriaLabel(viewYear, viewMonth, slot.day)}
+                          aria-selected={isSelected}
+                          aria-current={isToday ? 'date' : undefined}
+                          className={`custom-date-day ${isSelected ? 'is-selected' : ''} ${isToday ? 'is-today' : ''}`}
+                          onClick={() => selectDate(viewYear, viewMonth, slot.day!)}
+                        >
+                          <span aria-hidden="true">{slot.day}</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <span className={`field-error ${error ? 'has-error' : ''}`} id="admissionDate-error" aria-live="polite">
+        {error}
+      </span>
+    </div>
+  );
+}
+
 function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setDirty:(value:boolean)=>void;onDone:()=>void;onClose?:()=>void}) {
   const [submittedInfo, setSubmittedInfo] = useState<{
     name: string;
@@ -1408,7 +1941,7 @@ function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setD
                 {submittedInfo.admissionDate && (
                   <div className="voucher-item">
                     <span className="voucher-label">Date of Admission</span>
-                    <strong>{submittedInfo.admissionDate}</strong>
+                    <strong>{formatAdmissionDate(submittedInfo.admissionDate)}</strong>
                   </div>
                 )}
                 {submittedInfo.aadhaarNumber && (
@@ -1522,7 +2055,16 @@ function Application({admission,setDirty,onDone,onClose}:{admission:boolean;setD
               {field('guardian','Name of Guardian / Parent','Enter parent or guardian name',100)}
               {field('guardianPhone','Guardian mobile number','Enter 10-digit mobile number',10,'tel')}
               {field('guardianAadhaar','Guardian Aadhaar card number','Enter 12-digit Aadhaar number',12,'tel')}
-              {field('admissionDate','Date of admission','YYYY-MM-DD',20,'date')}
+              <CustomDatePicker
+                value={fields.admissionDate}
+                onChange={val => {
+                  setFields(prev => ({ ...prev, admissionDate: val }));
+                  setDirty(true);
+                  setTouched(prev => [...new Set([...prev, 'admissionDate'])]);
+                }}
+                onBlur={() => setTouched(prev => [...new Set([...prev, 'admissionDate'])])}
+                error={touched.includes('admissionDate') ? error('admissionDate') : ''}
+              />
               <div className="reg-col-full">
                 {field('address','Permanent address with PIN','Enter permanent street address, city, district & PIN code',500)}
               </div>

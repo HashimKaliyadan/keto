@@ -41,6 +41,7 @@ export const hostels: Hostel[] = [
     sharingOptions: [
       { sharing: 6, price: 6500 },
       { sharing: 4, price: 7500 },
+      { sharing: 2, price: 8500 },
     ],
     features: ['Homely Food', 'Wi-Fi', 'Study Area', 'Parking', 'Washing M/C', 'Ironing'],
     status: 'active',
@@ -62,6 +63,7 @@ export const hostels: Hostel[] = [
     sharingOptions: [
       { sharing: 6, price: 6500 },
       { sharing: 4, price: 7500 },
+      { sharing: 2, price: 8500 },
     ],
     features: ['Homely Food', 'Wi-Fi', 'Study Area', 'Parking', 'Washing M/C', 'Ironing'],
     status: 'active',
@@ -83,6 +85,7 @@ export const hostels: Hostel[] = [
     sharingOptions: [
       { sharing: 6, price: 6500 },
       { sharing: 4, price: 7500 },
+      { sharing: 2, price: 8500 },
     ],
     features: ['Homely Food', 'Wi-Fi', 'Study Area', 'Parking', 'Washing M/C', 'Ironing'],
     status: 'active',
@@ -104,6 +107,7 @@ export const hostels: Hostel[] = [
     sharingOptions: [
       { sharing: 6, price: 6500 },
       { sharing: 4, price: 7500 },
+      { sharing: 2, price: 8500 },
     ],
     features: ['Homely Food', 'Wi-Fi', 'Study Area', 'Parking', 'Washing M/C', 'Ironing'],
     status: 'active',
